@@ -47,10 +47,9 @@ describe('build', () => {
                 '-archivePath',
                 'TestProjectName.xcarchive',
                 'archive',
-                `CONFIGURATION_BUILD_DIR=${path.join(testProjectPath, 'build', 'device')}`,
                 `SHARED_PRECOMPS_DIR=${path.join(testProjectPath, 'build', 'sharedpch')}`
             ]);
-            expect(args.length).toEqual(13);
+            expect(args.length).toEqual(12);
         });
 
         it('should generate appropriate args if buildFlags are passed in', () => {
@@ -78,8 +77,8 @@ describe('build', () => {
                 '-archivePath',
                 'TestArchivePathFlag',
                 'archive',
-                'CONFIGURATION_BUILD_DIR=TestConfigBuildDirFlag',
-                'SHARED_PRECOMPS_DIR=TestSharedPrecompsDirFlag'
+                'SHARED_PRECOMPS_DIR=TestSharedPrecompsDirFlag',
+                'CONFIGURATION_BUILD_DIR=TestConfigBuildDirFlag'
             ]);
             expect(args.length).toEqual(13);
         });
@@ -99,10 +98,9 @@ describe('build', () => {
                 '-archivePath',
                 'TestProjectName.xcarchive',
                 'archive',
-                `CONFIGURATION_BUILD_DIR=${path.join(testProjectPath, 'build', 'device')}`,
                 `SHARED_PRECOMPS_DIR=${path.join(testProjectPath, 'build', 'sharedpch')}`
             ]);
-            expect(args.length).toEqual(13);
+            expect(args.length).toEqual(12);
         });
 
         it('should generate appropriate args for simulator', () => {
@@ -120,10 +118,9 @@ describe('build', () => {
                 '-destination',
                 'platform=iOS Simulator,name=iPhone 5s',
                 'build',
-                `CONFIGURATION_BUILD_DIR=${path.join(testProjectPath, 'build', 'emulator')}`,
                 `SHARED_PRECOMPS_DIR=${path.join(testProjectPath, 'build', 'sharedpch')}`
             ]);
-            expect(args.length).toEqual(13);
+            expect(args.length).toEqual(12);
         });
 
         it('should add matched flags that are not overriding for device', () => {
@@ -143,12 +140,11 @@ describe('build', () => {
                 '-archivePath',
                 'TestProjectName.xcarchive',
                 'archive',
-                `CONFIGURATION_BUILD_DIR=${path.join(testProjectPath, 'build', 'device')}`,
                 `SHARED_PRECOMPS_DIR=${path.join(testProjectPath, 'build', 'sharedpch')}`,
                 '-sdk',
                 'TestSdkFlag'
             ]);
-            expect(args.length).toEqual(15);
+            expect(args.length).toEqual(14);
         });
 
         it('should add matched flags that are not overriding for simulator', () => {
@@ -168,12 +164,11 @@ describe('build', () => {
                 '-destination',
                 'platform=iOS Simulator,name=iPhone 5s',
                 'build',
-                `CONFIGURATION_BUILD_DIR=${path.join(testProjectPath, 'build', 'emulator')}`,
                 `SHARED_PRECOMPS_DIR=${path.join(testProjectPath, 'build', 'sharedpch')}`,
                 '-archivePath',
                 'TestArchivePathFlag'
             ]);
-            expect(args.length).toEqual(15);
+            expect(args.length).toEqual(14);
         });
 
         it('should generate appropriate args for automatic provisioning', () => {
@@ -192,10 +187,9 @@ describe('build', () => {
                 'TestProjectName.xcarchive',
                 '-allowProvisioningUpdates',
                 'archive',
-                `CONFIGURATION_BUILD_DIR=${path.join(testProjectPath, 'build', 'device')}`,
                 `SHARED_PRECOMPS_DIR=${path.join(testProjectPath, 'build', 'sharedpch')}`
             ]);
-            expect(args.length).toEqual(14);
+            expect(args.length).toEqual(13);
         });
     });
 
