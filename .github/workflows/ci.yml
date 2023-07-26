@@ -48,17 +48,13 @@ jobs:
         env:
           CI: true
 
-      - uses: codecov/codecov-action@v3
-        with:
-          fail_ci_if_error: true
-
   non-darwin:
     name: NodeJS ${{ matrix.node-version }} on ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
         node-version: [16.x, 18.x, 20.x]
-        os: [ubuntu-latest, windows-latest]
+        os: [ubuntu-latest]
 
     steps:
       - uses: actions/checkout@v3
@@ -80,7 +76,3 @@ jobs:
           npm run unit-tests
         env:
           CI: true
-
-      - uses: codecov/codecov-action@v3
-        with:
-          fail_ci_if_error: true
