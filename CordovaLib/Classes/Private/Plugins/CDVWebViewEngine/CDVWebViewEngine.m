@@ -300,6 +300,14 @@ static void * KVOContext = &KVOContext;
     }
 }
 
+- (void)dispose
+{
+    WKWebView* wkWebView = (WKWebView*)_engineWebView;
+    [wkWebView.configuration.userContentController removeScriptMessageHandlerForName:CDV_BRIDGE_NAME];
+
+    [super dispose];
+}
+
 - (void) onAppWillEnterForeground:(NSNotification*)notification {
     if ([self shouldReloadWebView]) {
         NSLog(@"%@", @"CDVWebViewEngine reloading!");
