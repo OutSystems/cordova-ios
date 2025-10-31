@@ -323,6 +323,9 @@ static UIColor* defaultBackgroundColor(void) {
     }
     // /////////////////
 
+    [self setBackgroundColor: [UIColor colorNamed:@"BackgroundColor"]];
+    [self setSplashBackgroundColor:[UIColor colorNamed:@"SplashScreenBackgroundColor"]];
+
     [self.webView setBackgroundColor:self.backgroundColor];
     [self.launchView setBackgroundColor:self.splashBackgroundColor];
 
