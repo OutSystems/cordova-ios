@@ -22,7 +22,7 @@
 #import <Cordova/CDVWebViewProcessPoolFactory.h>
 #import <Cordova/NSDictionary+CordovaPreferences.h>
 #import <Cordova/CDVURLSchemeHandler.h>
-
+#import "CDVViewController+Private.h"
 #import <objc/message.h>
 
 #define CDV_BRIDGE_NAME @"cordova"
@@ -246,6 +246,8 @@
         wkWebView.customUserAgent = [settings cordovaSettingForKey:@"OverrideUserAgent"];
     }
 
+    [wkWebView addObserver:self forKeyPath:@"themeColor" options:NSKeyValueObservingOptionInitial context:nil];
+
     self.engineWebView = wkWebView;
 
     if ([self.viewController conformsToProtocol:@protocol(WKUIDelegate)]) {
@@ -290,6 +292,15 @@ static void * KVOContext = &KVOContext;
 
 - (void)observeValueForKeyPath:(NSString *)keyPath ofObject:(id)object change:(NSDictionary<NSString *,id> *)change context:(void *)context
 {
+    if ([keyPath isEqualToString:@"themeColor"]) {
+#if __IPHONE_OS_VERSION_MAX_ALLOWED >= 150000
+        if (@available(iOS 15.0, *)) {
+            [self.viewController setStatusBarWebViewColor:((WKWebView *)self.engineWebView).themeColor];
+        }
+#endif
+        return;
+    }
+
     if (context == KVOContext) {
         if (object == [self webView] && [keyPath isEqualToString: @"URL"] && [object valueForKeyPath:keyPath] == nil){
             NSLog(@"URL is nil. Reloading WKWebView");

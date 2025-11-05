@@ -28,6 +28,8 @@
 #import <Cordova/CDVPlugin.h>
 #import <Cordova/CDVWebViewEngineProtocol.h>
 
+@class CDVPlugin;
+
 @protocol CDVWebViewEngineConfigurationDelegate <NSObject>
 
 @optional
@@ -90,6 +92,12 @@ NS_ASSUME_NONNULL_BEGIN
  This can be set in the storyboard file as a view controller attribute.
  */
 @property (nonatomic, null_resettable, copy) IBInspectable UIColor *splashBackgroundColor;
+
+/**
+ The color drawn behind the status bar.
+ This can be set in the storyboard file as a view controller attribute.
+ */
+@property (nonatomic, null_resettable, copy) IBInspectable UIColor *statusBarBackgroundColor;
 
 /**
     Takes/Gives an array of UIInterfaceOrientation (int) objects
