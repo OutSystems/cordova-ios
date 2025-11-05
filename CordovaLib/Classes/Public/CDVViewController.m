@@ -24,20 +24,32 @@
 #import <objc/message.h>
 #import <Foundation/NSCharacterSet.h>
 #import <Cordova/CDV.h>
+#import <Cordova/CDVPlugin.h>
 #import "CDVPlugin+Private.h"
 #import <Cordova/CDVConfigParser.h>
 #import <Cordova/NSDictionary+CordovaPreferences.h>
 #import "CDVCommandDelegateImpl.h"
 
-UIColor* defaultBackgroundColor(void) {
+static UIColor* defaultBackgroundColor(void) {
+#if __IPHONE_OS_VERSION_MAX_ALLOWED >= 130000
     if (@available(iOS 13.0, *)) {
         return UIColor.systemBackgroundColor;
-    } else {
-        return UIColor.whiteColor;
     }
+#endif
+
+    return UIColor.whiteColor;
 }
 
-@interface CDVViewController () <CDVWebViewEngineConfigurationDelegate> { }
+@interface CDVViewController () <CDVWebViewEngineConfigurationDelegate, UIScrollViewDelegate> {
+    id <CDVWebViewEngineProtocol> _webViewEngine;
+    id <CDVCommandDelegate> _commandDelegate;
+    CDVCommandQueue* _commandQueue;
+    UIColor* _backgroundColor;
+    UIColor* _splashBackgroundColor;
+    UIColor* _statusBarBackgroundColor;
+    UIColor* _statusBarWebViewColor;
+    UIColor* _statusBarDefaultColor;
+}
 
 @property (nonatomic, readwrite, strong) NSXMLParser* configParser;
 @property (nonatomic, readwrite, strong) NSMutableDictionary* settings;
@@ -46,6 +58,7 @@ UIColor* defaultBackgroundColor(void) {
 @property (nonatomic, readwrite, strong) NSDictionary* pluginsMap;
 @property (nonatomic, readwrite, strong) id <CDVWebViewEngineProtocol> webViewEngine;
 @property (nonatomic, readwrite, strong) UIView* launchView;
+@property (nonatomic, readwrite, strong) UIView* statusBar;
 
 @property (readwrite, assign) BOOL initialized;
 
@@ -62,11 +75,43 @@ UIColor* defaultBackgroundColor(void) {
 @synthesize commandDelegate = _commandDelegate;
 @synthesize commandQueue = _commandQueue;
 @synthesize webViewEngine = _webViewEngine;
+@synthesize backgroundColor = _backgroundColor;
+@synthesize splashBackgroundColor = _splashBackgroundColor;
+@synthesize statusBarBackgroundColor = _statusBarBackgroundColor;
 @dynamic webView;
 
-- (void)__init
+#pragma mark - Initializers
+
+- (instancetype)initWithNibName:(NSString *)nibNameOrNil bundle:(NSBundle *)nibBundleOrNil
 {
-    if ((self != nil) && !self.initialized) {
+    self = [super initWithNibName:nibNameOrNil bundle:nibBundleOrNil];
+    if (self != nil) {
+        [self _cdv_init];
+    }
+    return self;
+}
+
+- (instancetype)initWithCoder:(NSCoder *)aDecoder
+{
+    self = [super initWithCoder:aDecoder];
+    if (self != nil) {
+        [self _cdv_init];
+    }
+    return self;
+}
+
+- (instancetype)init
+{
+    self = [super init];
+    if (self != nil) {
+        [self _cdv_init];
+    }
+    return self;
+}
+
+- (void)_cdv_init
+{
+    if (!self.initialized) {
         _commandQueue = [[CDVCommandQueue alloc] initWithViewController:self];
         _commandDelegate = [[CDVCommandDelegateImpl alloc] initWithViewController:self];
         [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(onAppWillTerminate:)
@@ -88,29 +133,78 @@ UIColor* defaultBackgroundColor(void) {
         self.supportedOrientations = [self parseInterfaceOrientations:
             [[[NSBundle mainBundle] infoDictionary] objectForKey:@"UISupportedInterfaceOrientations"]];
 
+        self.showInitialSplashScreen = true;
+
+        // Prevent reinitializing
         self.initialized = YES;
     }
 }
 
-- (id)initWithNibName:(NSString*)nibNameOrNil bundle:(NSBundle*)nibBundleOrNil
+#pragma mark -
+
+- (void)dealloc
 {
-    self = [super initWithNibName:nibNameOrNil bundle:nibBundleOrNil];
-    [self __init];
-    return self;
+    [[NSNotificationCenter defaultCenter] removeObserver:self];
+
+    [_commandQueue dispose];
+    [[self.pluginObjects allValues] makeObjectsPerformSelector:@selector(dispose)];
+
+    [self.webViewEngine loadHTMLString:@"about:blank" baseURL:nil];
+    [self.pluginObjects removeAllObjects];
+
+    [self.webView removeFromSuperview];
+    [self.launchView removeFromSuperview];
+
+    _webViewEngine = nil;
 }
 
-- (id)initWithCoder:(NSCoder*)aDecoder
+#pragma mark - Getters & Setters
+
+- (void)setBackgroundColor:(UIColor *)color
 {
-    self = [super initWithCoder:aDecoder];
-    [self __init];
-    return self;
+    _backgroundColor = color ?: defaultBackgroundColor();
+    [self.webView setBackgroundColor:self.backgroundColor];
+
 }
 
-- (id)init
+- (void)setSplashBackgroundColor:(UIColor *)color
 {
-    self = [super init];
-    [self __init];
-    return self;
+    _splashBackgroundColor = color ?: self.backgroundColor;
+    [self.launchView setBackgroundColor:self.splashBackgroundColor];
+}
+
+- (UIColor *)statusBarBackgroundColor
+{
+    // If a status bar background color has been explicitly set using the JS API, we always use that.
+    // Otherwise, if the webview reports a themeColor meta tag (iOS 15.4+) we use that.
+    // Otherwise, we use the status bar background color provided in IB (from config.xml).
+    // Otherwise, we use the background color.
+    return _statusBarBackgroundColor ?: _statusBarWebViewColor ?: _statusBarDefaultColor ?: self.backgroundColor;
+}
+
+- (void)setStatusBarBackgroundColor:(UIColor *)color
+{
+    // We want the initial value from IB to set the statusBarDefaultColor and
+    // then all future changes to set the statusBarBackgroundColor.
+    //
+    // The reason for this is that statusBarBackgroundColor is treated like a
+    // forced override when it is set, and we don't want that for the initial
+    // value from config.xml set via IB.
+
+    if (!_statusBarBackgroundColor && !_statusBarWebViewColor && !_statusBarDefaultColor) {
+        _statusBarDefaultColor = color;
+    } else {
+        _statusBarBackgroundColor = color;
+    }
+
+    [self.statusBar setBackgroundColor:self.statusBarBackgroundColor];
+}
+
+- (void)setStatusBarWebViewColor:(UIColor *)color
+{
+    _statusBarWebViewColor = color;
+
+    [self.statusBar setBackgroundColor:self.statusBarBackgroundColor];
 }
 
 -(NSString*)configFilePath{
@@ -132,22 +226,6 @@ UIColor* defaultBackgroundColor(void) {
     }
 
     return path;
-}
-
-- (void)parseSettingsWithParser:(NSObject <NSXMLParserDelegate>*)delegate
-{
-    // read from config.xml in the app bundle
-    NSString* path = [self configFilePath];
-
-    NSURL* url = [NSURL fileURLWithPath:path];
-
-    self.configParser = [[NSXMLParser alloc] initWithContentsOfURL:url];
-    if (self.configParser == nil) {
-        NSLog(@"Failed to initialize XML parser.");
-        return;
-    }
-    [self.configParser setDelegate:((id < NSXMLParserDelegate >)delegate)];
-    [self.configParser parse];
 }
 
 - (void)loadSettings
@@ -236,14 +314,16 @@ UIColor* defaultBackgroundColor(void) {
     return errorUrl;
 }
 
-- (UIView*)webView
+- (nullable UIView *)webView
 {
-    if (self.webViewEngine != nil) {
-        return self.webViewEngine.engineWebView;
+    if (_webViewEngine != nil) {
+        return _webViewEngine.engineWebView;
     }
 
     return nil;
 }
+
+#pragma mark - UIViewController & App Lifecycle
 
 // Implement viewDidLoad to do additional setup after loading the view, typically from a nib.
 - (void)viewDidLoad
@@ -253,16 +333,19 @@ UIColor* defaultBackgroundColor(void) {
     // Load settings
     [self loadSettings];
 
-    // // Instantiate the Launch screen /////////
-
+    // Instantiate the Launch screen
     if (!self.launchView) {
         [self createLaunchView];
     }
 
-    // // Instantiate the WebView ///////////////
-
+    // Instantiate the WebView
     if (!self.webView) {
         [self createGapView];
+    }
+
+    // Instantiate the status bar
+    if (!self.statusBar) {
+        [self createStatusBarView];
     }
 
     // /////////////////
@@ -284,7 +367,7 @@ UIColor* defaultBackgroundColor(void) {
 
     if (appURL) {
         NSURLRequest* appReq = [NSURLRequest requestWithURL:appURL cachePolicy:NSURLRequestUseProtocolCachePolicy timeoutInterval:20.0];
-        [self.webViewEngine loadRequest:appReq];
+        [_webViewEngine loadRequest:appReq];
     } else {
         NSString* loadErr = [NSString stringWithFormat:@"ERROR: Start Page at '%@/%@' was not found.", self.wwwFolderName, self.startPage];
         NSLog(@"%@", loadErr);
@@ -293,20 +376,21 @@ UIColor* defaultBackgroundColor(void) {
         if (errorUrl) {
             errorUrl = [NSURL URLWithString:[NSString stringWithFormat:@"?error=%@", [loadErr stringByAddingPercentEncodingWithAllowedCharacters:NSCharacterSet.URLPathAllowedCharacterSet]] relativeToURL:errorUrl];
             NSLog(@"%@", [errorUrl absoluteString]);
-            [self.webViewEngine loadRequest:[NSURLRequest requestWithURL:errorUrl]];
+            [_webViewEngine loadRequest:[NSURLRequest requestWithURL:errorUrl]];
         } else {
             NSString* html = [NSString stringWithFormat:@"<html><body> %@ </body></html>", loadErr];
-            [self.webViewEngine loadHTMLString:html baseURL:nil];
+            [_webViewEngine loadHTMLString:html baseURL:nil];
         }
     }
     // /////////////////
 
-    UIColor* bgDefault = defaultBackgroundColor();
-    UIColor* bgColor = [UIColor colorNamed:@"BackgroundColor"] ?: bgDefault;
-    UIColor* bgSplash = [UIColor colorNamed:@"SplashScreenBackgroundColor"] ?: bgColor;
+    [self setBackgroundColor: [UIColor colorNamed:@"BackgroundColor"]];
+    [self setSplashBackgroundColor:[UIColor colorNamed:@"SplashScreenBackgroundColor"]];
+    [self setStatusBarBackgroundColor:[UIColor colorNamed:@"StatusBarBackgroundColor"]];
 
-    [self.webView setBackgroundColor:bgColor];
-    [self.launchView setBackgroundColor:bgSplash];
+    if (self.showInitialSplashScreen) {
+        [self.launchView setAlpha:1];
+    }
 }
 
 -(void)viewWillAppear:(BOOL)animated
@@ -350,6 +434,8 @@ UIColor* defaultBackgroundColor(void) {
     [super viewWillTransitionToSize:size withTransitionCoordinator:coordinator];
     [[NSNotificationCenter defaultCenter] postNotification:[NSNotification notificationWithName:CDVViewWillTransitionToSizeNotification object:[NSValue valueWithCGSize:size]]];
 }
+
+#pragma mark - View Setup
 
 - (NSArray*)parseInterfaceOrientations:(NSArray*)orientations
 {
@@ -449,8 +535,8 @@ UIColor* defaultBackgroundColor(void) {
         [self registerPlugin:(CDVPlugin*)engine withClassName:webViewEngineClassName];
     }
 
-    self.webViewEngine = engine;
-    return self.webViewEngine.engineWebView;
+    _webViewEngine = engine;
+    return _webViewEngine.engineWebView;
 }
 
 /// Initialiizes the webViewEngine, with config, if supported and provided
@@ -514,6 +600,31 @@ UIColor* defaultBackgroundColor(void) {
 
     [self.view addSubview:view];
     [self.view sendSubviewToBack:view];
+    
+    if ([self.webView respondsToSelector:@selector(scrollView)]) {
+        UIScrollView *scrollView = [self.webView performSelector:@selector(scrollView)];
+        scrollView.delegate = self;
+    }
+}
+
+- (void)createStatusBarView
+{
+    // If cordova-plugin-statusbar is loaded, we'll let it handle the status
+    // bar to avoid introducing conflict
+    if (NSClassFromString(@"CDVStatusBar") != nil)
+        return;
+
+    self.statusBar = [[UIView alloc] init];
+    self.statusBar.translatesAutoresizingMaskIntoConstraints = NO;
+
+    [self.view addSubview:self.statusBar];
+
+    [self.statusBar.leadingAnchor constraintEqualToAnchor:self.view.leadingAnchor].active = YES;
+    [self.statusBar.trailingAnchor constraintEqualToAnchor:self.view.trailingAnchor].active = YES;
+    [self.statusBar.topAnchor constraintEqualToAnchor:self.view.topAnchor].active = YES;
+    [self.statusBar.bottomAnchor constraintEqualToAnchor:self.view.safeAreaLayoutGuide.topAnchor].active = YES;
+
+    self.statusBar.hidden = YES;
 }
 
 - (void)didReceiveMemoryWarning
@@ -545,13 +656,8 @@ UIColor* defaultBackgroundColor(void) {
 
 - (void)registerPlugin:(CDVPlugin*)plugin withClassName:(NSString*)className
 {
-    if ([plugin respondsToSelector:@selector(setViewController:)]) {
-        [plugin setViewController:self];
-    }
-
-    if ([plugin respondsToSelector:@selector(setCommandDelegate:)]) {
-        [plugin setCommandDelegate:_commandDelegate];
-    }
+    plugin.viewController = self;
+    plugin.commandDelegate = _commandDelegate;
 
     [self.pluginObjects setObject:plugin forKey:className];
     [plugin pluginInitialize];
@@ -559,13 +665,8 @@ UIColor* defaultBackgroundColor(void) {
 
 - (void)registerPlugin:(CDVPlugin*)plugin withPluginName:(NSString*)pluginName
 {
-    if ([plugin respondsToSelector:@selector(setViewController:)]) {
-        [plugin setViewController:self];
-    }
-
-    if ([plugin respondsToSelector:@selector(setCommandDelegate:)]) {
-        [plugin setCommandDelegate:_commandDelegate];
-    }
+    plugin.viewController = self;
+    plugin.commandDelegate = _commandDelegate;
 
     NSString* className = NSStringFromClass([plugin class]);
     [self.pluginObjects setObject:plugin forKey:className];
@@ -576,7 +677,7 @@ UIColor* defaultBackgroundColor(void) {
 /**
  Returns an instance of a CordovaCommand object, based on its name.  If one exists already, it is returned.
  */
-- (nullable id)getCommandInstance:(NSString*)pluginName
+- (nullable CDVPlugin *)getCommandInstance:(NSString*)pluginName
 {
     // first, we try to find the pluginName in the pluginsMap
     // (acts as a allowList as well) if it does not exist, we return nil
@@ -668,9 +769,9 @@ UIColor* defaultBackgroundColor(void) {
 - (bool)checkAndReinitViewUrl
 {
     NSURL* appURL = [self appUrl];
-    if ([self isUrlEmpty: [self.webViewEngine URL]] && ![self isUrlEmpty: appURL]) {
+    if ([self isUrlEmpty: [_webViewEngine URL]] && ![self isUrlEmpty: appURL]) {
         NSURLRequest* appReq = [NSURLRequest requestWithURL:appURL cachePolicy:NSURLRequestUseProtocolCachePolicy timeoutInterval:20.0];
-        [self.webViewEngine loadRequest:appReq];
+        [_webViewEngine loadRequest:appReq];
         return true;
     }
     return false;
@@ -735,6 +836,11 @@ UIColor* defaultBackgroundColor(void) {
 {
     self.webView.hidden = NO;
 
+    if ([self.webView respondsToSelector:@selector(scrollView)]) {
+        UIScrollView *scrollView = [self.webView performSelector:@selector(scrollView)];
+        [self scrollViewDidChangeAdjustedContentInset:scrollView];
+    }
+    
     if ([self.settings cordovaBoolSettingForKey:@"AutoHideSplashScreen" defaultValue:YES]) {
         CGFloat splashScreenDelaySetting = [self.settings cordovaFloatSettingForKey:@"SplashScreenDelay" defaultValue:0];
 
@@ -750,6 +856,25 @@ UIColor* defaultBackgroundColor(void) {
         }
     }
 }
+
+- (void)scrollViewDidChangeAdjustedContentInset:(UIScrollView *)scrollView
+{
+    if (self.webView.hidden) {
+        self.statusBar.hidden = true;
+        return;
+    }
+
+    self.statusBar.hidden = (scrollView.contentInsetAdjustmentBehavior == UIScrollViewContentInsetAdjustmentNever);
+}
+
+- (BOOL)prefersStatusBarHidden
+{
+    // The CDVStatusBar plugin overrides this in a category extension, and
+    // should bypass this implementation entirely
+    return self.statusBar.alpha < 0.0001f;
+}
+
+#pragma mark - API Methods for Plugins
 
 /**
  Method to be called from the plugin JavaScript to show or hide the launch screen.
@@ -773,19 +898,26 @@ UIColor* defaultBackgroundColor(void) {
     }];
 }
 
-// ///////////////////////
-
-- (void)dealloc
+- (void)showStatusBar:(BOOL)visible
 {
-    [[NSNotificationCenter defaultCenter] removeObserver:self];
+    [self.statusBar setAlpha:(visible ? 1 : 0)];
+    [self setNeedsStatusBarAppearanceUpdate];
+}
 
-    [_commandQueue dispose];
-    [[self.pluginObjects allValues] makeObjectsPerformSelector:@selector(dispose)];
+- (void)parseSettingsWithParser:(NSObject <NSXMLParserDelegate>*)delegate
+{
+    // read from config.xml in the app bundle
+    NSString* path = [self configFilePath];
 
-    [self.webViewEngine loadHTMLString:@"about:blank" baseURL:nil];
-    [self.pluginObjects removeAllObjects];
-    [self.webView removeFromSuperview];
-    self.webViewEngine = nil;
+    NSURL* url = [NSURL fileURLWithPath:path];
+
+    self.configParser = [[NSXMLParser alloc] initWithContentsOfURL:url];
+    if (self.configParser == nil) {
+        NSLog(@"Failed to initialize XML parser.");
+        return;
+    }
+    [self.configParser setDelegate:((id < NSXMLParserDelegate >)delegate)];
+    [self.configParser parse];
 }
 
 @end

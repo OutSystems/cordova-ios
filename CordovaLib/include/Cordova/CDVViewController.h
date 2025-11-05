@@ -28,6 +28,8 @@
 #import <Cordova/CDVPlugin.h>
 #import <Cordova/CDVWebViewEngineProtocol.h>
 
+@class CDVPlugin;
+
 @protocol CDVWebViewEngineConfigurationDelegate <NSObject>
 
 @optional
@@ -46,19 +48,11 @@
 
 @end
 
-@interface CDVViewController : UIViewController <CDVScreenOrientationDelegate>{
-    @protected
-    id <CDVWebViewEngineProtocol> _webViewEngine;
-    @protected
-    id <CDVCommandDelegate> _commandDelegate;
-    @protected
-    CDVCommandQueue* _commandQueue;
-}
+@interface CDVViewController : UIViewController <CDVScreenOrientationDelegate>
 
 NS_ASSUME_NONNULL_BEGIN
 
-@property (nonatomic, readonly, weak) IBOutlet UIView* webView;
-@property (nonatomic, readonly, strong) UIView* launchView;
+@property (nonatomic, readonly, nullable, weak) IBOutlet UIView* webView;
 
 @property (nullable, nonatomic, readonly, strong) NSMutableDictionary* pluginObjects;
 @property (nonatomic, readonly, strong) NSDictionary* pluginsMap;
@@ -74,6 +68,38 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, readonly, strong) id <CDVCommandDelegate> commandDelegate;
 
 /**
+ A boolean value indicating whether to show the splash screen while the webview
+ is initially loading.
+ The default value is `YES`.
+ This can be set in the storyboard file as a view controller attribute.
+ */
+@property (nonatomic) IBInspectable BOOL showInitialSplashScreen;
+
+/**
+ The color drawn behind the web content.
+ This is used as the background color for the web view behind any HTML content
+ and during loading before web content has been rendered. The default value is
+ the system background color.
+ This can be set in the storyboard file as a view controller attribute.
+ */
+@property (nonatomic, null_resettable, copy) IBInspectable UIColor *backgroundColor;
+
+/**
+ The color drawn behind the splash screen content.
+ This is used as the background color for the splash screen while the web
+ content is loading. If a page background color has been specified, that will
+ be used as the default value, otherwise the system background color is used.
+ This can be set in the storyboard file as a view controller attribute.
+ */
+@property (nonatomic, null_resettable, copy) IBInspectable UIColor *splashBackgroundColor;
+
+/**
+ The color drawn behind the status bar.
+ This can be set in the storyboard file as a view controller attribute.
+ */
+@property (nonatomic, null_resettable, copy) IBInspectable UIColor *statusBarBackgroundColor;
+
+/**
     Takes/Gives an array of UIInterfaceOrientation (int) objects
     ex. UIInterfaceOrientationPortrait
 */
@@ -87,12 +113,17 @@ NS_ASSUME_NONNULL_BEGIN
 - (NSArray*)parseInterfaceOrientations:(NSArray*)orientations;
 - (BOOL)supportsOrientation:(UIInterfaceOrientation)orientation;
 
-- (nullable id)getCommandInstance:(NSString*)pluginName;
+- (nullable CDVPlugin *)getCommandInstance:(NSString*)pluginName;
 - (void)registerPlugin:(CDVPlugin*)plugin withClassName:(NSString*)className;
 - (void)registerPlugin:(CDVPlugin*)plugin withPluginName:(NSString*)pluginName;
 
 - (void)parseSettingsWithParser:(NSObject <NSXMLParserDelegate>*)delegate;
 
+/**
+ Toggles the display of the splash screen overtop of the web view.
+ - Parameters:
+   - visible: Whether to make the splash screen visible or not.
+ */
 - (void)showLaunchScreen:(BOOL)visible;
 
 NS_ASSUME_NONNULL_END

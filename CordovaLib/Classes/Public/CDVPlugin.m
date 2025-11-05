@@ -29,12 +29,15 @@
 
 - (UIScrollView*)scrollView
 {
-    SEL scrollViewSelector = NSSelectorFromString(@"scrollView");
+    static UIView *caller = nil;
 
-    if ([self respondsToSelector:scrollViewSelector]) {
-        return ((id (*)(id, SEL))objc_msgSend)(self, scrollViewSelector);
+    if (caller != self && [self respondsToSelector:@selector(scrollView)]) {
+        caller = self;
+        UIScrollView *sv = [self performSelector:@selector(scrollView)];
+        caller = nil;
+        return sv;
     }
-
+    caller = nil;
     return nil;
 }
 

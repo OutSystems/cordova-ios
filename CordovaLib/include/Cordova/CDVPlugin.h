@@ -22,6 +22,7 @@
 #import <Cordova/CDVPluginResult.h>
 #import <Cordova/NSMutableArray+QueueAdditions.h>
 #import <Cordova/CDVCommandDelegate.h>
+#import <Cordova/CDVViewController.h>
 #import <Cordova/CDVWebViewEngineProtocol.h>
 
 @interface UIView (org_apache_cordova_UIView_Extension)
@@ -47,7 +48,7 @@ extern NSString* const CDVViewWillTransitionToSizeNotification;
 @property (nonatomic, readonly, weak) UIView* webView;
 @property (nonatomic, readonly, weak) id <CDVWebViewEngineProtocol> webViewEngine;
 
-@property (nonatomic, weak) UIViewController* viewController;
+@property (nonatomic, weak) CDVViewController* viewController;
 @property (nonatomic, weak) id <CDVCommandDelegate> commandDelegate;
 
 @property (readonly, assign) BOOL hasPendingOperation;
