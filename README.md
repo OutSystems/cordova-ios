@@ -58,12 +58,9 @@ cordova platform add ios
 
 Import project in Xcode through _File > Open_ and targeting `/path/to/your-cdv-project/platforms/ios/App.xcworkspace`.
 
-## How to Test Repo Development
+## Contributing
 
-```bash
-npm install
-npm test
-```
+See [CONTRIBUTING.md](./CONTRIBUTING.md) for development guidelines, building, testing, and contribution process.
 
 ## Further reading
 
