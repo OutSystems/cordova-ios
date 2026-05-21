@@ -82,21 +82,13 @@ jobs:
 
       - uses: github/codeql-action/analyze@v4
 
-      # v4.6.0
-      - uses: codecov/codecov-action@b9fd7d16f6d7d1b5d2bec1a2887e65ceed900238
-        if: success()
-        with:
-          name: ${{ runner.os }} node.js ${{ matrix.node-version }} (darwin)
-          token: ${{ secrets.CORDOVA_CODECOV_TOKEN }}
-          fail_ci_if_error: false
-
   non-darwin:
     name: NodeJS ${{ matrix.node-version }} on ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
         node-version: [20.x, 22.x, 24.x]
-        os: [ubuntu-latest, windows-latest]
+        os: [ubuntu-latest]
 
     steps:
       - uses: actions/checkout@v6
@@ -131,11 +123,3 @@ jobs:
           CI: true
 
       - uses: github/codeql-action/analyze@v4
-
-      # v4.6.0
-      - uses: codecov/codecov-action@b9fd7d16f6d7d1b5d2bec1a2887e65ceed900238
-        if: success()
-        with:
-          name: ${{ runner.os }} node.js ${{ matrix.node-version }} (non-darwin)
-          token: ${{ secrets.CORDOVA_CODECOV_TOKEN }}
-          fail_ci_if_error: false
