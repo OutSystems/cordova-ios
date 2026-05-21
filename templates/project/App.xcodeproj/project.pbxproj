@@ -357,6 +357,7 @@
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 				TARGETED_DEVICE_FAMILY = "1,2";
 				VALIDATE_WORKSPACE = NO;
+				CLANG_ENABLE_EXPLICIT_MODULES = NO;
 			};
 			name = Debug;
 		};
@@ -424,6 +425,7 @@
 				SWIFT_COMPILATION_MODE = wholemodule;
 				TARGETED_DEVICE_FAMILY = "1,2";
 				VALIDATE_PRODUCT = YES;
+				CLANG_ENABLE_EXPLICIT_MODULES = NO;
 			};
 			name = Release;
 		};
