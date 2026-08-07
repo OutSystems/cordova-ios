@@ -129,6 +129,8 @@
 		9052DE8F2150D06B008E83D4 /* CDVHandleOpenURL.h in Headers */ = {isa = PBXBuildFile; fileRef = 7ED95CF81AB9028C008C4574 /* CDVHandleOpenURL.h */; };
 		9068B5332C6DFE2000B13532 /* CDVSettingsDictionary.h in Headers */ = {isa = PBXBuildFile; fileRef = 9068B5322C6DFE2000B13532 /* CDVSettingsDictionary.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		9068B5342C6DFE2000B13532 /* CDVSettingsDictionary.h in Headers */ = {isa = PBXBuildFile; fileRef = 9068B5322C6DFE2000B13532 /* CDVSettingsDictionary.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		9068B5352C6DFE2000B13530 /* CDVWebViewEngine.h in Headers */ = {isa = PBXBuildFile; fileRef = 9068B5332C6DFE2000B13530 /* CDVWebViewEngine.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		9068B5352C6DFE2000B13531 /* CDVWebViewEngine.h in Headers */ = {isa = PBXBuildFile; fileRef = 9068B5332C6DFE2000B13530 /* CDVWebViewEngine.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		9068B5362C6E007400B13532 /* CDVSettingsDictionary.m in Sources */ = {isa = PBXBuildFile; fileRef = 9068B5352C6E007400B13532 /* CDVSettingsDictionary.m */; };
 		9068B5372C6E007400B13532 /* CDVSettingsDictionary.m in Sources */ = {isa = PBXBuildFile; fileRef = 9068B5352C6E007400B13532 /* CDVSettingsDictionary.m */; };
 		90B382512AEB72DD00F3F4D7 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 902D0BC12AEB64EB009C68E5 /* PrivacyInfo.xcprivacy */; };
@@ -219,6 +221,7 @@
 		9047732D2C7A57E900373636 /* CDVURLSchemeHandler.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = CDVURLSchemeHandler.h; sourceTree = "<group>"; };
 		9047732E2C7A57E900373636 /* CDVURLSchemeHandler.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = CDVURLSchemeHandler.m; sourceTree = "<group>"; };
 		9068B5322C6DFE2000B13532 /* CDVSettingsDictionary.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = CDVSettingsDictionary.h; sourceTree = "<group>"; };
+		9068B5332C6DFE2000B13530 /* CDVWebViewEngine.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = CDVWebViewEngine.h; sourceTree = "<group>"; };
 		9068B5352C6E007400B13532 /* CDVSettingsDictionary.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = CDVSettingsDictionary.m; sourceTree = "<group>"; };
 		A3B082D21BB15CEA00D8DC35 /* CDVGestureHandler.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CDVGestureHandler.h; sourceTree = "<group>"; };
 		A3B082D31BB15CEA00D8DC35 /* CDVGestureHandler.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = CDVGestureHandler.m; sourceTree = "<group>"; };
@@ -409,6 +412,7 @@
 				7ED95D241AB9029B008C4574 /* CDVTimer.h */,
 				7ED95D2A1AB9029B008C4574 /* CDVViewController.h */,
 				4E23F8F923E16E96006CD852 /* CDVWebViewProcessPoolFactory.h */,
+				9068B5332C6DFE2000B13530 /* CDVWebViewEngine.h */,
 				7ED95D2C1AB9029B008C4574 /* CDVWebViewEngineProtocol.h */,
 				7ED95D311AB9029B008C4574 /* NSDictionary+CordovaPreferences.h */,
 				7ED95D331AB9029B008C4574 /* NSMutableArray+QueueAdditions.h */,
@@ -437,6 +441,7 @@
 				C0C01EBB1E39131A0056E6CB /* CDV.h in Headers */,
 				C0C01EBC1E39131A0056E6CB /* CDVAppDelegate.h in Headers */,
 				9068B5332C6DFE2000B13532 /* CDVSettingsDictionary.h in Headers */,
+				9068B5352C6DFE2000B13530 /* CDVWebViewEngine.h in Headers */,
 				9044ED532E67FEBB003B58ED /* CDVPluginNotifications.h in Headers */,
 				C0C01EBD1E39131A0056E6CB /* CDVAvailability.h in Headers */,
 				9044ED4D2E67F80E003B58ED /* CDVSceneDelegate.h in Headers */,
@@ -481,6 +486,7 @@
 				7ED95D361AB9029B008C4574 /* CDVAppDelegate.h in Headers */,
 				7ED95D381AB9029B008C4574 /* CDVAvailability.h in Headers */,
 				9068B5342C6DFE2000B13532 /* CDVSettingsDictionary.h in Headers */,
+				9068B5352C6DFE2000B13531 /* CDVWebViewEngine.h in Headers */,
 				9044ED542E67FEBB003B58ED /* CDVPluginNotifications.h in Headers */,
 				7ED95D391AB9029B008C4574 /* CDVAvailabilityDeprecated.h in Headers */,
 				9044ED4C2E67F80E003B58ED /* CDVSceneDelegate.h in Headers */,
