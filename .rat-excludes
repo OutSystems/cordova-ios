@@ -22,3 +22,6 @@ node_modules/
 # Files that do not support comments
 **/*.txt
 **/*.xctestplan
+
+# OutSystems fork documentation, not Apache-licensed content
+outsystems-cordova-ios-8-customizations.md
