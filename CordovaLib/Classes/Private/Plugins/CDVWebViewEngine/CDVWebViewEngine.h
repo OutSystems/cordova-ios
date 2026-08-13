@@ -17,7 +17,13 @@
     under the License.
 */
 
-// The CDVWebViewEngine interface is declared in the public umbrella header so
-// that it resolves both here and for plugins importing <Cordova/CDVWebViewEngine.h>.
-// Declaring it in both places would be a duplicate interface definition.
-#import <Cordova/CDVWebViewEngine.h>
+#import <WebKit/WebKit.h>
+#import <Cordova/CDVPlugin.h>
+
+@interface CDVWebViewEngine : CDVPlugin <CDVWebViewEngineProtocol, WKScriptMessageHandler, WKNavigationDelegate>
+
+@property (nonatomic, strong, readonly) id <WKUIDelegate> uiDelegate;
+
+- (void)allowsBackForwardNavigationGestures:(CDVInvokedUrlCommand*)command;
+
+@end

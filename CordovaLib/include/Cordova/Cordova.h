@@ -33,7 +33,6 @@
 #import <Cordova/CDVInvokedUrlCommand.h>
 #import <Cordova/CDVPlugin+Resources.h>
 #import <Cordova/CDVSettingsDictionary.h>
-#import <Cordova/CDVWebViewEngine.h>
 #import <Cordova/CDVWebViewEngineProtocol.h>
 #import <Cordova/CDVWebViewProcessPoolFactory.h>
 #import <Cordova/CDVScreenOrientationDelegate.h>
