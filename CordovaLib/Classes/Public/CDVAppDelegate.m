@@ -20,12 +20,13 @@
 #import <Cordova/CDVAppDelegate.h>
 #import <Cordova/CDVAvailability.h>
 #import <Cordova/CDVPluginNotifications.h>
-#import <Cordova/CDVViewController.h>
 #import <Cordova/CDVSceneDelegate.h>
+#import <Cordova/CDVViewController.h>
 
 // Stand-ins for UIKit's archived UISceneSession and UISceneConfiguration that read only the
 // configuration's delegate class name. Unarchiving the real UISceneSession before UIApplication
-// exists doesn't restore its configuration.
+// exists doesn't restore its configuration. They are only ever decoded, never archived, so
+// encodeWithCoder: (required by NSCoding) is empty.
 @interface CDVSavedSceneConfiguration : NSObject <NSSecureCoding>
 @property (nonatomic, copy, nullable) NSString *delegateClassName;
 @end
@@ -97,34 +98,40 @@ static void CDVRemoveForeignSceneSessions(void)
         return;
     }
 
-    for (NSData *archive in sessions.allValues) {
-        if (![archive isKindOfClass:[NSData class]]) {
-            continue;
-        }
-        // The session is archived under an undocumented top-level key, so try each one.
-        NSDictionary *plist = [NSPropertyListSerialization propertyListWithData:archive options:NSPropertyListImmutable format:NULL error:NULL];
-        NSDictionary *top = [plist isKindOfClass:[NSDictionary class]] ? plist[@"$top"] : nil;
-        if (![top isKindOfClass:[NSDictionary class]]) {
-            continue;
-        }
+    // Any exception from a malformed archive means it can't be read, so nothing is removed.
+    @try {
+        for (NSData *archive in sessions.allValues) {
+            if (![archive isKindOfClass:[NSData class]]) {
+                continue;
+            }
+            // The session is archived under an undocumented top-level key, so try each one.
+            NSDictionary *plist = [NSPropertyListSerialization propertyListWithData:archive options:NSPropertyListImmutable format:NULL error:NULL];
+            NSDictionary *top = [plist isKindOfClass:[NSDictionary class]] ? plist[@"$top"] : nil;
+            if (![top isKindOfClass:[NSDictionary class]]) {
+                continue;
+            }
 
-        NSKeyedUnarchiver *unarchiver = [[NSKeyedUnarchiver alloc] initForReadingFromData:archive error:NULL];
-        [unarchiver setClass:[CDVSavedSceneSession class] forClassName:@"UISceneSession"];
-        [unarchiver setClass:[CDVSavedSceneConfiguration class] forClassName:@"UISceneConfiguration"];
-        for (NSString *key in top) {
-            CDVSavedSceneSession *session = [unarchiver decodeObjectOfClass:[CDVSavedSceneSession class] forKey:key];
-            NSString *delegateClassName = [session isKindOfClass:[CDVSavedSceneSession class]] ? session.configuration.delegateClassName : nil;
-            // A name that doesn't resolve to a class is foreign too: NSClassFromString returns nil.
-            if (delegateClassName && ![NSClassFromString(delegateClassName) isSubclassOfClass:[CDVSceneDelegate class]]) {
+            for (NSString *key in top) {
+                // A new unarchiver per key: after a failed decode (a key holding another class), an
+                // unarchiver returns nil for every later decode.
+                NSKeyedUnarchiver *unarchiver = [[NSKeyedUnarchiver alloc] initForReadingFromData:archive error:NULL];
+                [unarchiver setClass:[CDVSavedSceneSession class] forClassName:@"UISceneSession"];
+                [unarchiver setClass:[CDVSavedSceneConfiguration class] forClassName:@"UISceneConfiguration"];
+                CDVSavedSceneSession *session = [unarchiver decodeObjectOfClass:[CDVSavedSceneSession class] forKey:key];
                 [unarchiver finishDecoding];
-                [[NSFileManager defaultManager] removeItemAtPath:savedStatePath error:NULL];
+                NSString *delegateClassName = [session isKindOfClass:[CDVSavedSceneSession class]] ? session.configuration.delegateClassName : nil;
+                // A name that doesn't resolve to a class is foreign too: NSClassFromString returns nil.
+                if (delegateClassName && ![NSClassFromString(delegateClassName) isSubclassOfClass:[CDVSceneDelegate class]]) {
+                    [[NSFileManager defaultManager] removeItemAtPath:savedStatePath error:NULL];
 #if DEBUG
-                NSLog(@"Removed saved scene state from another build of this app (scene delegate %@).", delegateClassName);
+                    NSLog(@"Removed saved scene state from another build of this app (scene delegate %@).", delegateClassName);
 #endif
-                return;
+                    return;
+                }
             }
         }
-        [unarchiver finishDecoding];
+    } @catch (NSException *exception) {
+        return;
     }
 }
 
